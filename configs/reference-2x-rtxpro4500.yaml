@@ -1,0 +1,8 @@
+# The config behind notes/RESULTS.md (scripts/make_config.sh writes an equivalent one with
+# GPU_USAGE_FRACTION etc. spelled out). The spill path is the reference box's instance NVMe.
+sirius:
+  memory:
+    disk: { disk_id: 0, capacity_bytes: 300000000000, downgrade_root_dirs: "/opt/dlami/nvme/sirius-disk" }
+  executor:
+    scan_manager:
+      cache: { mode: os }
