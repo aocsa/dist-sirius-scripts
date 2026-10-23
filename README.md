@@ -12,6 +12,7 @@ Sirius branch: [`aocsa/sirius@exchange-operator-v2`](https://github.com/aocsa/si
 | [notes/RESULTS.md](notes/RESULTS.md) | Q5 / Q12 timings at SF1000 and SF3000 on 1 and 2 GPUs |
 | [notes/TUNING.md](notes/TUNING.md) | **What to change with more GPUs, more VRAM, more host memory** |
 | [notes/FINDINGS.md](notes/FINDINGS.md) | Bugs found and fixed on the way, and what is still open |
+| [dist-plan-opt/](dist-plan-opt/README.md) | **4x GB200, all 22 TPC-H queries at SF3000/SF10000** with `aocsa/sirius@dist-plan-opt`: runner, profiling tools, configs, ZSTD data rewrite, notes |
 
 Headline (2x RTX PRO 4500, 32 GB each, SF3000, warm): Q5 as written takes 38.1 s on 1 GPU and
 30.6 s on 2; the same query in the Theseus-shaped SQL takes 10.5 s on 1 GPU and **6.3 s on 2**.
@@ -105,3 +106,4 @@ scans are read in full by every rank (results multiplied by the rank count; use 
 | `sql/` | views and queries (`@DATA@` is replaced by the dataset path) |
 | `expected/` | reference answers |
 | `configs/reference-2x-rtxpro4500.yaml` | the config used for `notes/RESULTS.md` |
+| `dist-plan-opt/` | the `dist-plan-opt` branch on 4x GB200: its own README, scripts, tools, configs and notes |

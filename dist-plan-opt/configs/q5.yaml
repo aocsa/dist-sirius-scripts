@@ -1,0 +1,7 @@
+sirius:
+  memory:
+    host: { capacity_bytes: 120Gi }
+    disk: { disk_id: 0, capacity_bytes: 100000000000, downgrade_root_dirs: "/tmp/aocsa/sirius-disk" }
+  executor:
+    scan_manager:
+      cache: { mode: os }

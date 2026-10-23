@@ -1,3 +1,5 @@
 runs/
 *.log
 __pycache__/
+telemetry_data/
+*.parquet
