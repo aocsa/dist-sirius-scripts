@@ -1,0 +1,343 @@
+diff --git a/src/exchange/transport.cpp b/src/exchange/transport.cpp
+index 41f825c3..f9ff9bbb 100644
+--- a/src/exchange/transport.cpp
++++ b/src/exchange/transport.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include "exchange/batch_io.hpp"
+ #include "exchange/messages.hpp"
++#include "op/scan/scan_timing.hpp"
+ #include "sirius/exception.hpp"
+ 
+ #include <rmm/cuda_device.hpp>
+@@ -463,7 +464,8 @@ void transport::send(stream_id stream, rank_t to, std::shared_ptr<cucascade::dat
+     e.cb.on_batch(stream, to, index, std::move(batch));
+     return;
+   }
+-  auto out = outgoing_batch::make(std::move(batch), e.send_stream.view());
++  auto const t0 = op::scan::timing::enabled() ? op::scan::timing::now_ns() : 0;
++  auto out      = outgoing_batch::make(std::move(batch), e.send_stream.view());
+   if (!out) { return; }
+   auto const bytes = out->stream_bytes();
+   // Counted before the deleter can run, on any path that drops the batch.
+@@ -472,9 +474,11 @@ void transport::send(stream_id stream, rank_t to, std::shared_ptr<cucascade::dat
+     std::lock_guard lock{_mutex};
+     ++_held[query];
+   }
++  if (t0 != 0) { op::scan::timing::shuffle_enqueued(bytes); }
+   std::shared_ptr<outgoing_batch> held(new outgoing_batch(std::move(*out)),
+-                                       [this, query](outgoing_batch* b) {
++                                       [this, query, timed = t0 != 0](outgoing_batch* b) {
+                                          delete b;
++                                         if (timed) { op::scan::timing::shuffle_released(); }
+                                          released(query);
+                                        });
+   std::unique_lock lock{_mutex};
+@@ -485,6 +489,10 @@ void transport::send(stream_id stream, rank_t to, std::shared_ptr<cucascade::dat
+   if (_error) { std::rethrow_exception(_error); }
+   e.queued_bytes += bytes;
+   e.queues[to].push_back({stream, e.sent[to][stream]++, std::move(held)});
++  if (t0 != 0) {
++    op::scan::timing::add(op::scan::timing::phase::shuffle_send_blocked,
++                          op::scan::timing::now_ns() - t0);
++  }
+ }
+ 
+ void transport::released(std::uint64_t query)
+diff --git a/src/io/sirius_datasource.cpp b/src/io/sirius_datasource.cpp
+index a7551ed0..80b38d46 100644
+--- a/src/io/sirius_datasource.cpp
++++ b/src/io/sirius_datasource.cpp
+@@ -19,6 +19,7 @@
+ #include "exec/semi_future.hpp"
+ #include "exec/try.hpp"
+ #include "io/cache/prefetching_cache.hpp"
++#include "op/scan/scan_timing.hpp"
+ 
+ #include <rmm/device_buffer.hpp>
+ 
+@@ -49,11 +50,15 @@ std::future<size_t> bridge_semi_to_std(Producer&& producer)
+   auto p              = std::make_shared<std::promise<size_t>>();
+   auto fut            = p->get_future();
+   using terminal_type = exec::invocable<void(exec::try_t<size_t>&&) &&>;
+-  terminal_type terminal{[p = std::move(p)](exec::try_t<size_t>&& t) mutable {
++  // Recorded before the promise is set, so the reader sees it once its wait returns.
++  terminal_type terminal{[p = std::move(p), sink = op::scan::timing::current_sink](
++                           exec::try_t<size_t>&& t) mutable {
+     if (t.has_exception()) {
+       p->set_exception(std::move(t).exception());
+     } else {
+-      p->set_value(std::move(t).value());
++      auto const n = std::move(t).value();
++      if (sink) sink->record(n);
++      p->set_value(n);
+     }
+   }};
+   auto sf = std::forward<Producer>(producer)();
+diff --git a/src/op/scan/parquet_gpu_ingestible.cpp b/src/op/scan/parquet_gpu_ingestible.cpp
+index 37107ba5..5ffa7ea8 100644
+--- a/src/op/scan/parquet_gpu_ingestible.cpp
++++ b/src/op/scan/parquet_gpu_ingestible.cpp
+@@ -19,6 +19,7 @@
+ // sirius
+ #include "op/scan/gpu_ingestible_types.hpp"
+ #include "op/scan/owning_table_view.hpp"
++#include "op/scan/scan_timing.hpp"
+ 
+ #include <expression/ast/from_duckdb.hpp>
+ #include <expression_evaluator/expression_evaluator.hpp>
+@@ -1898,9 +1899,25 @@ filtered_table parquet_gpu_ingestible::materialize_metadata_to_table(
+       // The general route reads as it decodes, so it needs the row-group selection
+       // on the options; the hybrid readers take it as a call argument instead.
+       if (!all_slices_pruned) { opts.set_row_groups(std::move(rg_per_src)); }
++      timing::read_sink sink;
++      auto const t0 = timing::enabled() ? timing::now_ns() : 0;
++      if (timing::enabled()) { timing::current_sink = &sink; }
+       table = std::move(
+         cudf::io::read_parquet(std::move(cudf_sources), std::move(metadatas), opts, stream, mr_ref)
+           .tbl);
++      if (timing::enabled()) {
++        timing::current_sink = nullptr;
++        stream.wait();
++        auto const t_end      = timing::now_ns();
++        auto const fetch_done = std::max(sink.last_done_ns.load(), t0);
++        auto& totals          = timing::global();
++        totals.splits.fetch_add(1, std::memory_order_relaxed);
++        totals.reads.fetch_add(sink.reads.load(), std::memory_order_relaxed);
++        totals.read_bytes.fetch_add(sink.bytes.load(), std::memory_order_relaxed);
++        totals.rows.fetch_add(table->num_rows(), std::memory_order_relaxed);
++        timing::add(timing::phase::fetch, fetch_done - t0);
++        timing::add(timing::phase::decode, t_end - fetch_done);
++      }
+     }
+     if (_plan->has_user_virtual_columns()) {
+       auto const& slice = split.rg_slices.front();
+@@ -1990,6 +2007,7 @@ std::unique_ptr<cudf::table> parquet_gpu_ingestible::post_filter_and_project(
+   std::span<std::size_t const> elided,
+   expression_query_policy policy)
+ {
++  timing::scoped_phase const filter_timer{timing::phase::static_filter, stream.get()};
+   rmm::device_async_resource_ref mr_ref(mem_space.get_default_allocator());
+ 
+   // Apply the row filter post-decode when materialization did not — reader-side
+diff --git a/src/op/scan/scan_timing.hpp b/src/op/scan/scan_timing.hpp
+new file mode 100644
+index 00000000..53f011ab
+--- /dev/null
++++ b/src/op/scan/scan_timing.hpp
+@@ -0,0 +1,174 @@
++/*
++ * Copyright 2026, Sirius Contributors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#pragma once
++
++#include "log/logging.hpp"
++
++#include <cuda_runtime_api.h>
++
++#include <array>
++#include <atomic>
++#include <chrono>
++#include <cstddef>
++#include <cstdint>
++#include <cstdlib>
++
++/// Opt-in scan phase timing, enabled by the SIRIUS_SCAN_TIMING environment variable.
++///
++/// Splits a parquet scan task's time into fetch (until the last column-chunk read
++/// completes), decode (the rest of read_parquet, stream-synchronized) and the post-scan
++/// filters. Totals are per process and logged at most every 5 s, so cold and warm
++/// iterations separate by timestamp. Timing adds stream syncs, so leave it off when
++/// measuring end-to-end speed.
++namespace sirius::op::scan::timing {
++
++enum class phase : std::size_t {
++  fetch,
++  decode,
++  static_filter,
++  dynamic_filter,
++  shuffle_route,         ///< EXCHANGE_SINK::execute: hash partition and routing, synced.
++  shuffle_send_blocked,  ///< Pipeline time inside transport::send (back-pressure waits).
++  shuffle_transfer,      ///< Wall time with any outgoing batch still in flight.
++  count
++};
++
++using clock = std::chrono::steady_clock;
++
++[[nodiscard]] inline bool enabled() noexcept
++{
++  static bool const on = std::getenv("SIRIUS_SCAN_TIMING") != nullptr;
++  return on;
++}
++
++[[nodiscard]] inline std::int64_t now_ns() noexcept
++{
++  return std::chrono::duration_cast<std::chrono::nanoseconds>(clock::now().time_since_epoch())
++    .count();
++}
++
++struct totals {
++  std::array<std::atomic<std::int64_t>, static_cast<std::size_t>(phase::count)> ns{};
++  std::atomic<std::uint64_t> splits{0}, reads{0}, read_bytes{0}, rows{0};
++  std::atomic<std::uint64_t> shuffle_batches{0}, shuffle_bytes{0};
++  std::atomic<std::int64_t> last_log_ns{0};
++  // Outgoing batches in flight and when the count last rose from zero.
++  std::atomic<std::int64_t> in_flight{0}, busy_since_ns{0};
++};
++
++[[nodiscard]] inline totals& global() noexcept
++{
++  static totals t;
++  return t;
++}
++
++inline void maybe_log() noexcept
++{
++  auto& t         = global();
++  auto const now  = now_ns();
++  auto last       = t.last_log_ns.load(std::memory_order_relaxed);
++  if (now - last < 5'000'000'000LL) return;
++  if (!t.last_log_ns.compare_exchange_strong(last, now)) return;
++  auto ms = [&](phase p) { return t.ns[static_cast<std::size_t>(p)].load() / 1e6; };
++  // Ranks of one host share a log file; the visible GPU tells them apart.
++  static char const* const gpu = std::getenv("CUDA_VISIBLE_DEVICES");
++  SIRIUS_LOG_INFO(
++    "[scan_timing] gpu {} splits {} reads {} read_MB {:.0f} rows {} | fetch_ms {:.0f} "
++    "decode_ms {:.0f} static_filter_ms {:.0f} dynamic_filter_ms {:.0f} | shuffle_batches {} "
++    "shuffle_MB {:.0f} route_ms {:.0f} send_blocked_ms {:.0f} transfer_ms {:.0f}",
++    gpu ? gpu : "?",
++    t.splits.load(),
++    t.reads.load(),
++    t.read_bytes.load() / 1e6,
++    t.rows.load(),
++    ms(phase::fetch),
++    ms(phase::decode),
++    ms(phase::static_filter),
++    ms(phase::dynamic_filter),
++    t.shuffle_batches.load(),
++    t.shuffle_bytes.load() / 1e6,
++    ms(phase::shuffle_route),
++    ms(phase::shuffle_send_blocked),
++    ms(phase::shuffle_transfer));
++}
++
++/// An outgoing exchange batch of @p bytes was queued for a peer.
++inline void shuffle_enqueued(std::size_t bytes) noexcept
++{
++  auto& t = global();
++  t.shuffle_batches.fetch_add(1, std::memory_order_relaxed);
++  t.shuffle_bytes.fetch_add(bytes, std::memory_order_relaxed);
++  if (t.in_flight.fetch_add(1) == 0) { t.busy_since_ns.store(now_ns()); }
++}
++
++/// An outgoing exchange batch was fully sent (its last reference dropped).
++inline void shuffle_released() noexcept
++{
++  auto& t = global();
++  if (t.in_flight.fetch_sub(1) == 1) {
++    auto const since = t.busy_since_ns.load();
++    if (since != 0) { t.ns[static_cast<std::size_t>(phase::shuffle_transfer)] += now_ns() - since; }
++  }
++}
++
++inline void add(phase p, std::int64_t ns) noexcept
++{
++  global().ns[static_cast<std::size_t>(p)].fetch_add(ns, std::memory_order_relaxed);
++  maybe_log();
++}
++
++/// Adds the time from construction to destruction to @p p, after syncing @p stream.
++class scoped_phase {
++ public:
++  scoped_phase(phase p, cudaStream_t stream) noexcept
++    : _phase(p), _stream(stream), _t0(enabled() ? now_ns() : 0)
++  {
++  }
++  ~scoped_phase()
++  {
++    if (_t0 == 0) return;
++    cudaStreamSynchronize(_stream);
++    add(_phase, now_ns() - _t0);
++  }
++  scoped_phase(scoped_phase const&)            = delete;
++  scoped_phase& operator=(scoped_phase const&) = delete;
++
++ private:
++  phase _phase;
++  cudaStream_t _stream;
++  std::int64_t _t0;
++};
++
++/// Completion record for the reads one scan task issues; see sirius_datasource.
++struct read_sink {
++  std::atomic<std::int64_t> last_done_ns{0};
++  std::atomic<std::uint64_t> reads{0}, bytes{0};
++
++  void record(std::size_t n) noexcept
++  {
++    auto const t = now_ns();
++    auto prev    = last_done_ns.load(std::memory_order_relaxed);
++    while (prev < t && !last_done_ns.compare_exchange_weak(prev, t)) {}
++    reads.fetch_add(1, std::memory_order_relaxed);
++    bytes.fetch_add(n, std::memory_order_relaxed);
++  }
++};
++
++/// The sink that reads issued from this thread report to, or null.
++inline thread_local read_sink* current_sink = nullptr;
++
++}  // namespace sirius::op::scan::timing
+diff --git a/src/op/scan/sirius_physical_dynamic_filter.cpp b/src/op/scan/sirius_physical_dynamic_filter.cpp
+index b8459c18..0ffcc3cf 100644
+--- a/src/op/scan/sirius_physical_dynamic_filter.cpp
++++ b/src/op/scan/sirius_physical_dynamic_filter.cpp
+@@ -18,6 +18,7 @@
+ #include <data/data_batch_utils.hpp>
+ #include <op/scan/dynamic_filter_merge.hpp>
+ #include <op/scan/scan_output_operator_data.hpp>
++#include <op/scan/scan_timing.hpp>
+ #include <op/scan/sirius_physical_dynamic_filter.hpp>
+ #include <telemetry/nvtx.hpp>
+ 
+@@ -53,6 +54,7 @@ std::unique_ptr<operator_data> sirius_physical_dynamic_filter::execute(
+   const operator_data& input_data, ::cuda::stream_ref stream)
+ {
+   nvtx_scoped_range nvtx_range{"sirius_physical_dynamic_filter::execute"};
++  timing::scoped_phase const filter_timer{timing::phase::dynamic_filter, stream.get()};
+   auto const& input = dynamic_cast<const pipelineable_operator_data&>(input_data);
+   if (!_consumer) { return std::make_unique<pipelineable_operator_data>(input.get_data_batches()); }
+ 
+diff --git a/src/op/sirius_physical_exchange_sink.cpp b/src/op/sirius_physical_exchange_sink.cpp
+index b76d3788..ada237d4 100644
+--- a/src/op/sirius_physical_exchange_sink.cpp
++++ b/src/op/sirius_physical_exchange_sink.cpp
+@@ -20,6 +20,7 @@
+ #include "exchange/exchange_service.hpp"
+ #include "log/logging.hpp"
+ #include "op/partition/gpu_partition_impl.hpp"
++#include "op/scan/scan_timing.hpp"
+ #include "sirius/exception.hpp"
+ 
+ #include <cudf/copying.hpp>
+@@ -100,6 +101,8 @@ void sirius_physical_exchange_sink::set_range_boundaries(
+ std::unique_ptr<operator_data> sirius_physical_exchange_sink::execute(
+   const operator_data& input_data, ::cuda::stream_ref stream)
+ {
++  op::scan::timing::scoped_phase const route_timer{op::scan::timing::phase::shuffle_route,
++                                                   stream.get()};
+   auto const& input   = dynamic_cast<const pipelineable_operator_data&>(input_data);
+   auto const& handles = input.get_data_batches();
+   auto const batches  = input.get_read_only_batches();

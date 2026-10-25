@@ -1,0 +1,17 @@
+sirius:
+  memory:
+    # Pins live in the host pool; let the spill-heavy queries use more of it before evicting.
+    host: { capacity_bytes: 250Gi , downgrade_trigger_fraction: 0.97, downgrade_stop_fraction: 0.93 }
+    # / has 78 GB free: 4 ranks x 15 GB keeps disk spill inside it.
+    disk: { disk_id: 0, capacity_bytes: 15000000000, downgrade_root_dirs: "@SPILL_DIR@" }
+  executor:
+    scan_manager:
+      num_threads: 32
+      uring_n_reactors: 4
+      cache: { mode: none }
+      # Cold-read fix (small-read cap, in this build).
+      uring: { max_inflight_small_reads: 16, small_read_bytes: 4MiB }
+      pin_partial_serving: true
+      pin_partial_min_fraction: 0.3
+  operator_params:
+    max_dynamic_filter_bloom_bytes_per_gpu: 4Gi

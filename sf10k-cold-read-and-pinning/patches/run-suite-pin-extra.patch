@@ -1,0 +1,51 @@
+diff --git a/bench/dist-tpch/run_suite.py b/bench/dist-tpch/run_suite.py
+index 27592e7e..ac71c9de 100644
+--- a/bench/dist-tpch/run_suite.py
++++ b/bench/dist-tpch/run_suite.py
+@@ -79,6 +79,13 @@ def main():
+         default="",
+         help="tables to pin whole on every rank, e.g. nation,region,supplier",
+     )
++    ap.add_argument(
++        "--pin-extra",
++        action="append",
++        default=[],
++        help="NAME:TABLE:TIER:col,col -- one more pin after the others, e.g. a second copy "
++        "of a table on another tier (repeatable)",
++    )
+     ap.add_argument("--host-pool", help="override the config's host capacity_bytes")
+     ap.add_argument("--ref-dir", help="an earlier run's output, for reference answers")
+     ap.add_argument(
+@@ -142,6 +149,13 @@ def main():
+             + (", replicate = true" if t in replicate else "")
+             + (", compression = true);" if a.pin_plans else ");")
+         )
++    extra = [e.split(":") for e in a.pin_extra]
++    for name_, t, tier, cs in extra:
++        col_list = ", ".join(f"'{c}'" for c in cs.split(","))
++        lines.append(
++            f"CALL pin_table('{a.data}/{t}/*.parquet', name = '{name_}', tier = '{tier}', "
++            f"cols = [{col_list}]" + (", compression = true);" if a.pin_plans else ");")
++        )
+     for q in queries:
+         lines += [texts[q] + ";"] * a.iters
+     sqlf = f"{a.out}/{name}.sql"
+@@ -194,14 +208,15 @@ def main():
+                 hits[current] += 1
+ 
+     runs = parse(open(f"{qout}/exchange_rank_0.log", errors="replace").read())
+-    pin_runs, runs = runs[: len(pins)], runs[len(pins) :]
++    pin_names = list(pins) + [e[0] for e in extra]
++    pin_runs, runs = runs[: len(pin_names)], runs[len(pin_names) :]
+     json.dump(
+         {
+             "tables": {t: cs for t, cs in pins.items()},
+             "replicated": sorted(replicate & set(pins)),
+-            "pin_s": dict(zip(pins, [r[2] for r in pin_runs])),
++            "pin_s": dict(zip(pin_names, [r[2] for r in pin_runs])),
+             "pin_ok": all(r[0] == [["true"]] for r in pin_runs)
+-            and len(pin_runs) == len(pins),
++            and len(pin_runs) == len(pin_names),
+             "wall_s": round(wall, 1),
+             "rc": p.returncode,
+         },

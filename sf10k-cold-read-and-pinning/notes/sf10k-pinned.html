@@ -1,0 +1,239 @@
+<title>SF10000 Pinned Tables</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: headline result, two-run summary tiles, per-query table with shared-scale bars, then how to reproduce. */
+  :root { --bg:#111613; --card:#1a201c; --line:#2b332e; --text:#e8ece9; --muted:#9aa59e;
+          --green:#a8e36b; --grey:#7f8b96; --red:#f2a07b; --field:#0f1411; --field-line:#46514a;
+          --code:#0c100d; color-scheme:dark; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+          --bg:#f5f7f4; --card:#ffffff; --line:#dde3dc; --text:#18201a; --muted:#5d6a61;
+          --green:#3f7d12; --grey:#8a96a1; --red:#b8502a; --field:#ffffff; --field-line:#b9c3bb;
+          --code:#eef2ed; color-scheme:light; } }
+  :root[data-theme="light"] { --bg:#f5f7f4; --card:#ffffff; --line:#dde3dc; --text:#18201a; --muted:#5d6a61;
+          --green:#3f7d12; --grey:#8a96a1; --red:#b8502a; --field:#ffffff; --field-line:#b9c3bb;
+          --code:#eef2ed; color-scheme:light; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+  main { max-width:1300px; margin:0 auto; padding-block:28px;
+         padding-left:max(28px, env(safe-area-inset-left, 0px)); padding-right:max(28px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size:20px; margin:0 0 4px; text-wrap:balance; }
+  .sub { color:var(--muted); margin:0 0 22px; }
+  .headline { font-size:24px; line-height:1.35; margin:0 0 22px; text-wrap:balance; max-width:60ch; }
+  .headline b { color:var(--green); }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:22px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px 26px; min-width:0; }
+  .kicker { letter-spacing:.14em; font-size:12px; color:var(--muted); text-transform:uppercase; }
+  .big { font-size:48px; font-weight:700; margin:10px 0 6px; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .big small { font-size:20px; font-weight:500; color:var(--muted); }
+  .big.green { color:var(--green); }
+  .pair { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin-top:12px; font-variant-numeric:tabular-nums; }
+  .pair span:nth-child(odd) { color:var(--muted); }
+  .note { color:var(--muted); }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px 28px; min-width:0; margin-bottom:22px; }
+  .head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+  .head > div:first-child { min-width:0; }
+  h2 { margin:0 0 6px; font-size:22px; }
+  h3 { margin:22px 0 8px; font-size:17px; }
+  select { background:var(--field); color:var(--text); border:1px solid var(--field-line); border-radius:8px;
+           padding:9px 12px; font-size:15px; min-width:220px; }
+  select:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
+  label { display:block; font-size:14px; margin-bottom:6px; }
+  .legend { color:var(--muted); font-size:14px; margin:14px 0 6px; display:flex; flex-wrap:wrap; gap:6px 22px; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+  .tablewrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:14px; padding:12px 10px;
+       border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:12px 10px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  td.q { font-weight:700; } td.cmp { color:var(--muted); }
+  tfoot td { font-weight:700; border-bottom:none; }
+  .faster { color:var(--green); } .slower { color:var(--red); }
+  .bars { width:32%; min-width:120px; } .bar { height:5px; border-radius:3px; margin:3px 0; min-width:3px; }
+  .ok { color:var(--green); }
+  .chip { display:inline-block; font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid var(--field-line);
+          color:var(--muted); white-space:nowrap; }
+  .chip.partial { border-color:var(--green); color:var(--green); }
+  .prose { color:var(--muted); font-size:14px; line-height:1.6; max-width:110ch; }
+  .prose b { color:var(--text); font-weight:600; }
+  .prose p { margin:0 0 10px; }
+  code { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:6px 0 12px;
+        overflow-x:auto; color:var(--text); }
+  .repro { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .repro > div { min-width:0; }
+  @media (max-width: 960px) { .repro { grid-template-columns:1fr; } }
+  @media (max-width: 860px) {
+    main { padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+    .cards { grid-template-columns:1fr; }
+    .big { font-size:40px; }
+    .headline { font-size:20px; }
+    .head { flex-direction:column; }
+    .panel { padding:20px 16px; }
+    select { width:100%; min-width:0; }
+  }
+</style>
+<main>
+<h1>Distributed Sirius &middot; TPC-H SF10000 &middot; Pinned vs. Unpinned</h1>
+<p class="sub">All 22 queries, 4 GB200 ranks, same data and hardware. Every answer matches in both runs.</p>
+<p class="headline">Pinned runs the 22 queries <b>1.85&times; faster warm</b> (507.3 s &rarr; 274.7 s) and
+  <b>2.85&times; faster cold</b> (806.7 s &rarr; 283.1 s) than Unpinned.</p>
+
+<section class="cards">
+  <div class="card"><div class="kicker">Pinned</div>
+    <div class="big green">274.7<small> s warm</small></div>
+    <div class="pair"><span>Cold</span><span>283.1 s</span><span>Pinning, once</span><span>51 s per rank</span></div></div>
+  <div class="card"><div class="kicker">Unpinned</div>
+    <div class="big">507.3<small> s warm</small></div>
+    <div class="pair"><span>Cold</span><span>806.7 s</span><span>Pinning</span><span>none</span></div></div>
+  <div class="card"><div class="kicker">Pinned is faster by</div>
+    <div class="big green">1.85&times;<small> warm</small></div>
+    <div class="pair"><span>Cold</span><span>2.85&times;</span><span>From startup</span><span>2.4&times; (334 s vs 807 s)</span></div></div>
+</section>
+
+<section class="panel">
+  <div class="head">
+    <div><h2>Per query</h2>
+      <div class="note" id="table-note"></div></div>
+    <div><label for="run">Run</label><select id="run">
+      <option value="warm">Second run (warm)</option><option value="cold">First run (cold)</option></select></div>
+  </div>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--green)"></span>Pinned</span>
+    <span><span class="dot" style="background:var(--grey)"></span>Unpinned</span>
+    <span>Bar lengths use a shared linear scale</span>
+  </div>
+  <div class="tablewrap">
+  <table><thead><tr><th>Query</th><th>Pinned</th><th>Unpinned</th><th>Change</th>
+    <th>Runtime</th><th>Read from pins</th><th>Answer</th></tr></thead>
+    <tbody id="rows"></tbody>
+    <tfoot><tr><td>Total</td><td id="tot-p"></td><td class="cmp" id="tot-u"></td><td id="tot-c"></td><td></td><td></td><td></td></tr></tfoot></table>
+  </div>
+  <div class="prose" style="margin-top:16px">
+<p><b>Timing.</b> Unpinned runs every query in its own 4 processes, twice: the first run reads everything from GPFS (cold),
+the second runs in the same processes (warm). Pinned starts 4 processes once, pins the tables (51 s, not in the totals),
+then runs every query twice. Its cold run is a query's first run after pinning, in processes that already ran the earlier
+queries. From startup, one full pass takes 51 + 283 &asymp; 334 s pinned against 807 s unpinned. Running all queries in one
+process is itself about 11% faster on queries that read no pins, so part of the warm gain comes from that, not from the
+pins.</p>
+<p><b>What Pinned holds.</b> 153 GB per rank in host memory, compressed: lineitem {l_orderkey, l_suppkey, l_commitdate,
+l_receiptdate}, orders (all columns the queries read except o_comment), partsupp and supplier as each rank's share, nation and
+region on every rank. Everything else is read from disk. With partial pin serving, a scan whose pin holds at least 30% of its
+columns (by width) reads those from the pin and the rest from disk; seven queries do (<span class="chip partial">partly</span>).</p>
+<p><b>Answers.</b> Both runs return the same answer as a reference unpinned run, row for row, numbers within 1e-6 relative or
+0.01 absolute. Q3 and Q18 (Consistent*) differ only in tied rows past their <code>ORDER BY</code> columns, in both runs alike.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>How to reproduce</h2>
+  <div class="prose">
+<p><b>Hardware and data.</b> One host with 4&times; NVIDIA GB200 (189 GB each), 144 Grace cores on 2 NUMA nodes of 478 GB. TPC-H
+SF10000 Parquet from tpchgen-rs (3.7 TB) in <code>/scratch/sirius/datasets/tpch_sf10000</code> on GPFS, read with O_DIRECT.</p>
+<p><b>Build, both runs.</b> Branch <a href="https://github.com/aocsa/sirius/tree/perf/sf10k-pinned-repro"><code>perf/sf10k-pinned-repro</code></a>
+on <code>aocsa/sirius</code>, at <code>1af4e21b</code>: <code>dist-plan-opt-rank-pin</code> (<code>626fe147</code>) plus two commits, the small-read cap
+(<code>7c99ebe1</code>) and partial pin serving (<code>1af4e21b</code>). Both runs use this one build; the configs below choose what each run uses.</p>
+<pre><code>git clone -b perf/sf10k-pinned-repro git@github.com:aocsa/sirius.git &amp;&amp; cd sirius
+git submodule update --init --recursive
+pixi run make</code></pre>
+  </div>
+  <div class="repro">
+    <div class="prose">
+      <h3>1. Pinned</h3>
+<p><code>pinned.yaml</code>:</p>
+<pre><code>sirius:
+  memory:
+    host: { capacity_bytes: 190Gi , downgrade_trigger_fraction: 0.97, downgrade_stop_fraction: 0.93 }
+    disk: { disk_id: 0, capacity_bytes: 15000000000, downgrade_root_dirs: "@SPILL_DIR@" }
+  executor:
+    scan_manager:
+      num_threads: 32
+      uring_n_reactors: 4
+      cache: { mode: none }
+      uring: { max_inflight_small_reads: 16, small_read_bytes: 4MiB }
+      pin_partial_serving: true
+      pin_partial_min_fraction: 0.3
+  operator_params:
+    max_dynamic_filter_bloom_bytes_per_gpu: 4Gi</code></pre>
+<p>Pin once, then run all 22 queries twice in the same 4 processes:</p>
+<pre><code>pixi run python bench/dist-tpch/run_suite.py --out OUT --tag _pinned \
+  --config pinned.yaml --host-pool 190Gi \
+  --data /scratch/sirius/datasets/tpch_sf10000 --sf 10000 --iters 2 \
+  --pin-tier host --pin-plans PLANS_DIR \
+  --pin-only lineitem,orders,partsupp,supplier,nation,region \
+  --pin-replicate nation,region \
+  --pin-exclude l_partkey,l_quantity,l_extendedprice,l_discount,l_tax,l_returnflag,l_linestatus,l_shipdate,l_shipinstruct,l_shipmode,o_comment</code></pre>
+<p><code>PLANS_DIR</code> holds the Simpatico plan files <code>lineitem.txt</code>, <code>orders.txt</code>, <code>partsupp.txt</code>
+and <code>supplier.txt</code>: the repo's <code>src/compression/simpatico_codegen/plans/tpch_sf1000</code> files, with
+<code>partsupp_disabled.txt</code> and <code>supplier_disabled.txt</code> renamed. Results go to <code>OUT/results.jsonl</code>.</p>
+    </div>
+    <div class="prose">
+      <h3>2. Unpinned</h3>
+<p><code>unpinned.yaml</code>:</p>
+<pre><code>sirius:
+  memory:
+    host: { capacity_bytes: 210Gi }
+    disk: { disk_id: 0, capacity_bytes: 30000000000, downgrade_root_dirs: "@SPILL_DIR@" }
+  executor:
+    scan_manager:
+      num_threads: 32
+      uring_n_reactors: 4
+      cache: { mode: none }
+      uring: { max_inflight_small_reads: 16, small_read_bytes: 4MiB }
+  operator_params:
+    max_dynamic_filter_bloom_bytes_per_gpu: 4Gi</code></pre>
+<p>Each query in its own 4 processes, twice:</p>
+<pre><code>for q in $(seq 1 22); do
+  pixi run python bench/dist-tpch/run_query.py $q --out OUT/q$q \
+    --config unpinned.yaml --host-pool 210Gi --sf 10000 --ranks 4 --iters 2 \
+    --data /scratch/sirius/datasets/tpch_sf10000 --tag _direct
+done</code></pre>
+<p>Partial pin serving stays off (the default), and nothing is pinned. Each query's times go to
+<code>OUT/q&lt;N&gt;/results.jsonl</code>.</p>
+    </div>
+  </div>
+  <div class="prose">
+<p><b>Both.</b> Empty the spill directory before each run, and check that no other Sirius process holds the GPUs. Times are
+DuckDB's timer on rank 0; <code>run_suite.py</code> and <code>run_query.py</code> take cold as the first run and warm as the second.</p>
+  </div>
+</section>
+</main>
+<script>
+const D = {"queries":["Q01","Q02","Q03","Q04","Q05","Q06","Q07","Q08","Q09","Q10","Q11","Q12","Q13","Q14","Q15","Q16","Q17","Q18","Q19","Q20","Q21","Q22"],"pinned":{"Q01":{"cold":16.378,"warm":16.648,"answer":"ok","pins":0},"Q02":{"cold":1.493,"warm":1.231,"answer":"ok","pins":64},"Q03":{"cold":17.986,"warm":16.324,"answer":"TIES","pins":8},"Q04":{"cold":1.34,"warm":1.307,"answer":"ok","pins":10},"Q05":{"cold":9.607,"warm":9.917,"answer":"ok","pins":46},"Q06":{"cold":12.977,"warm":12.822,"answer":"ok","pins":0},"Q07":{"cold":12.42,"warm":12.143,"answer":"ok","pins":40},"Q08":{"cold":16.15,"warm":16.094,"answer":"ok","pins":48},"Q09":{"cold":24.519,"warm":19.898,"answer":"ok","pins":40},"Q10":{"cold":19.569,"warm":19.706,"answer":"ok","pins":16},"Q11":{"cold":4.126,"warm":4.122,"answer":"ok","pins":46},"Q12":{"cold":9.448,"warm":9.387,"answer":"ok","pins":18},"Q13":{"cold":9.527,"warm":9.373,"answer":"ok","pins":8},"Q14":{"cold":18.51,"warm":19.005,"answer":"ok","pins":0},"Q15":{"cold":18.495,"warm":17.917,"answer":"ok","pins":8},"Q16":{"cold":1.621,"warm":1.467,"answer":"ok","pins":16},"Q17":{"cold":27.759,"warm":28.402,"answer":"ok","pins":0},"Q18":{"cold":11.785,"warm":11.84,"answer":"TIES","pins":24},"Q19":{"cold":22.56,"warm":19.657,"answer":"ok","pins":0},"Q20":{"cold":18.917,"warm":19.557,"answer":"ok","pins":24},"Q21":{"cold":5.416,"warm":5.42,"answer":"ok","pins":48},"Q22":{"cold":2.515,"warm":2.416,"answer":"ok","pins":8}},"unpinned":{"Q01":{"cold":22.269,"warm":20.409,"answer":"ok","pins":0},"Q02":{"cold":13.991,"warm":7.667,"answer":"ok","pins":0},"Q03":{"cold":42.912,"warm":25.508,"answer":"TIES","pins":0},"Q04":{"cold":33.469,"warm":17.15,"answer":"ok","pins":0},"Q05":{"cold":47.203,"warm":26.32,"answer":"ok","pins":0},"Q06":{"cold":32.407,"warm":17.341,"answer":"ok","pins":0},"Q07":{"cold":49.411,"warm":30.472,"answer":"ok","pins":0},"Q08":{"cold":46.394,"warm":31.872,"answer":"ok","pins":0},"Q09":{"cold":52.764,"warm":37.147,"answer":"ok","pins":0},"Q10":{"cold":42.759,"warm":31.35,"answer":"ok","pins":0},"Q11":{"cold":13.948,"warm":9.273,"answer":"ok","pins":0},"Q12":{"cold":40.397,"warm":20.403,"answer":"ok","pins":0},"Q13":{"cold":19.049,"warm":13.663,"answer":"ok","pins":0},"Q14":{"cold":37.489,"warm":20.481,"answer":"ok","pins":0},"Q15":{"cold":40.057,"warm":20.817,"answer":"ok","pins":0},"Q16":{"cold":9.912,"warm":4.625,"answer":"ok","pins":0},"Q17":{"cold":43.937,"warm":29.183,"answer":"ok","pins":0},"Q18":{"cold":53.209,"warm":36.958,"answer":"TIES","pins":0},"Q19":{"cold":44.149,"warm":26.622,"answer":"ok","pins":0},"Q20":{"cold":32.659,"warm":21.234,"answer":"ok","pins":0},"Q21":{"cold":79.79,"warm":54.144,"answer":"ok","pins":0},"Q22":{"cold":8.564,"warm":4.71,"answer":"ok","pins":0}}};
+const fmt = s => s == null ? "&ndash;" : s.toFixed(1) + " s";
+const runSel = document.getElementById("run");
+const PARTIAL = new Set(["Q05", "Q07", "Q08", "Q09", "Q12", "Q13", "Q18"]);
+const pinCell = q => {
+  if (PARTIAL.has(q)) return '<span class="chip partial">partly</span>';
+  const n = (D.pinned[q] || {}).pins || 0;
+  return n ? '<span class="chip">' + n + ' scans</span>' : '<span class="note">disk only</span>';
+};
+const answer = a => '<span class="ok">' + (a === "TIES" ? "Consistent*" : "Consistent") + '</span>';
+function render() {
+  const k = runSel.value;
+  document.getElementById("table-note").textContent = (k === "warm" ? "Second run (warm)" : "First run (cold)") +
+    ", seconds by DuckDB's timer on rank 0.";
+  const max = Math.max(...D.queries.flatMap(q => [D.pinned[q][k], D.unpinned[q][k]]));
+  const body = document.getElementById("rows"); body.innerHTML = "";
+  let tp = 0, tu = 0;
+  D.queries.forEach(q => {
+    const p = D.pinned[q], u = D.unpinned[q];
+    tp += p[k]; tu += u[k];
+    const d = (p[k] - u[k]) / u[k] * 100;
+    const w = s => s / max * 100 + "%";
+    body.insertAdjacentHTML("beforeend",
+      "<tr><td class='q'>" + q + "</td><td>" + fmt(p[k]) + "</td><td class='cmp'>" + fmt(u[k]) +
+      "</td><td class='" + (d <= 0 ? "faster" : "slower") + "'>" + (d > 0 ? "+" : "") + d.toFixed(1) + "%</td>" +
+      "<td class='bars'><div class='bar' style='width:" + w(p[k]) + ";background:var(--green)'></div>" +
+      "<div class='bar' style='width:" + w(u[k]) + ";background:var(--grey)'></div></td><td>" +
+      pinCell(q) + "</td><td>" + answer(p.answer) + "</td></tr>");
+  });
+  document.getElementById("tot-p").textContent = tp.toFixed(1) + " s";
+  document.getElementById("tot-u").textContent = tu.toFixed(1) + " s";
+  const c = document.getElementById("tot-c");
+  c.textContent = ((tp - tu) / tu * 100).toFixed(1) + "% (" + (tu / tp).toFixed(2) + "× faster)";
+  c.className = "faster";
+}
+runSel.addEventListener("change", render);
+render();
+</script>

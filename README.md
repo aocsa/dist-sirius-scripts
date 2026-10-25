@@ -12,6 +12,7 @@ Sirius branch: [`aocsa/sirius@exchange-operator-v2`](https://github.com/aocsa/si
 | [notes/RESULTS.md](notes/RESULTS.md) | Q5 / Q12 timings at SF1000 and SF3000 on 1 and 2 GPUs |
 | [notes/TUNING.md](notes/TUNING.md) | **What to change with more GPUs, more VRAM, more host memory** |
 | [notes/FINDINGS.md](notes/FINDINGS.md) | Bugs found and fixed on the way, and what is still open |
+| [sf10k-cold-read-and-pinning/](sf10k-cold-read-and-pinning/README.md) | **TPC-H SF10000 on 4x GB200: the io_uring cold-read fix and pinned tables with partial pin serving** (22 queries 685 → 275 s warm), with `aocsa/sirius@perf/sf10k-pinned-repro`: scripts, configs, plan files, results, notes |
 | [dist-plan-opt/](dist-plan-opt/README.md) | **4x GB200, all 22 TPC-H queries at SF3000/SF10000** with `aocsa/sirius@dist-plan-opt`: runner, profiling tools, configs, ZSTD data rewrite, notes |
 
 Headline (2x RTX PRO 4500, 32 GB each, SF3000, warm): Q5 as written takes 38.1 s on 1 GPU and
