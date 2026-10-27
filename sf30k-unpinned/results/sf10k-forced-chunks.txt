@@ -1,0 +1,5 @@
+r1-c200m/q21_sf10000: concat splits [op51:4chunks x4, op51:5chunks x4, op77:3chunks x8]; join builds [op55:4chunks x4, op55:5chunks x4, op81:3chunks x8]
+r2-c10m/q21_sf10000: concat splits [op51:12chunks x8, op77:8chunks x8]; join builds [op55:12chunks x8, op81:8chunks x8]
+r3-c10m/q04_sf10000: concat splits [none]; join builds [none]
+r4-c10m/q20_sf10000: concat splits [op37:4chunks x8]; join builds [op44:4chunks x8]
+r5-c10m/q22_sf10000: concat splits [none]; join builds [none]

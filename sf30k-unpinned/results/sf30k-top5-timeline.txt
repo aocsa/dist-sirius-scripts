@@ -1,0 +1,23 @@
+17:10:32 Q21 base r1 start ()
+17:15:07 Q21 base failed
+17:15:07 Q21 base r1 rc=1 times=[158.678, 100.892] same=['ok', 'ok'] spill=0
+17:15:07 Q9 base r2 start ()
+17:20:38 Q9 base r2 rc=0 times=[182.131, 132.35] same=['ok', 'ok'] spill=0
+17:20:38 Q18 base r3 start ()
+17:22:09 Q18 base failed
+17:22:09 Q18 base r3 rc=1 times=[] same=[] spill=5498547552
+17:22:09 Q7 base r4 start ()
+17:26:05 Q7 base r4 rc=0 times=[135.839, 83.736] same=['ok', 'ok'] spill=0
+17:26:05 Q14 base r5 start ()
+17:29:18 Q14 base r5 rc=0 times=[113.197, 65.494] same=['ok', 'ok'] spill=0
+17:29:18 sf30k A/B done
+17:30:05 Q18 p170 r6 start (--host-pool 170Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+17:37:22 Q18 p170 r6 errors=0 rc=0 times=[229.301, 192.061] rows=100 same=['ok', 'ok'] spill=0
+17:37:22 Q9 p170 r7 start (--host-pool 170Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+17:45:37 Q9 p170 r7 errors=0 rc=0 times=[340.135, 138.087] rows=175 same=['ok', 'ok'] spill=0
+17:45:37 sf30k A/B done
+17:46:37 Q9 p180 r8 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+17:53:29 Q9 p180 r8 errors=0 rc=0 times=[191.228, 203.112] rows=175 same=['ok', 'ok'] spill=0
+17:53:29 Q18 p180 r9 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+18:00:28 Q18 p180 r9 errors=0 rc=0 times=[226.736, 175.48] rows=100 same=['ok', 'ok'] spill=0
+18:00:28 sf30k A/B done

@@ -12,6 +12,7 @@ Sirius branch: [`aocsa/sirius@exchange-operator-v2`](https://github.com/aocsa/si
 | [notes/RESULTS.md](notes/RESULTS.md) | Q5 / Q12 timings at SF1000 and SF3000 on 1 and 2 GPUs |
 | [notes/TUNING.md](notes/TUNING.md) | **What to change with more GPUs, more VRAM, more host memory** |
 | [notes/FINDINGS.md](notes/FINDINGS.md) | Bugs found and fixed on the way, and what is still open |
+| [sf30k-unpinned/](sf30k-unpinned/README.md) | **TPC-H SF30000 on 4x GB200, unpinned** (22 queries 2542.7 s cold, 1696.8 s hot), with `aocsa/sirius@a4f9e541`: config tuned for this scale (180Gi host pool, spill on /scratch), the Q21 chunked-build fix, scripts, results |
 | [sf10k-unpinned-cold-read-fix/](sf10k-unpinned-cold-read-fix/README.md) | **TPC-H SF10000 on 4x GB200, unpinned: the io_uring cold-read fix** (22 queries 2128 → 807 s cold, 685 → 507 s warm), with `aocsa/sirius@7c99ebe1`: cause, standalone probe, scripts, configs, results |
 | [dist-plan-opt/](dist-plan-opt/README.md) | **4x GB200, all 22 TPC-H queries at SF3000/SF10000** with `aocsa/sirius@dist-plan-opt`: runner, profiling tools, configs, ZSTD data rewrite, notes |
 

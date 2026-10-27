@@ -1,0 +1,2 @@
+r1-p180/q21_sf30000: concat splits [op53:2chunks x8]; join builds [op57:2chunks x8]
+r2-p180c1b/q21_sf30000: concat splits [op53:3chunks x8, op79:2chunks x8]; join builds [op57:3chunks x8, op83:2chunks x8]

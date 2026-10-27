@@ -1,0 +1,45 @@
+18:48:33 Q1 p180 r1 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+18:50:46 Q1 p180 r1 errors=0 rc=0 times=[63.014, 54.571] rows=4 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+18:50:46 Q2 p180 r2 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+18:52:03 Q2 p180 r2 errors=0 rc=0 times=[40.4, 23.304] rows=100 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+18:52:04 Q3 p180 r3 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+18:55:53 Q3 p180 r3 errors=0 rc=0 times=[129.005, 83.933] rows=10 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+18:55:53 Q4 p180 r4 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+18:58:30 Q4 p180 r4 errors=0 rc=0 times=[90.007, 52.113] rows=5 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+18:58:31 Q5 p180 r5 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:02:16 Q5 p180 r5 errors=0 rc=0 times=[132.854, 76.904] rows=5 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:02:16 Q6 p180 r6 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:04:47 Q6 p180 r6 errors=0 rc=0 times=[87.383, 49.133] rows=1 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:04:47 Q7 p180 r7 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:08:51 Q7 p180 r7 errors=0 rc=0 times=[138.775, 89.506] rows=4 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:08:51 Q8 p180 r8 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:13:00 Q8 p180 r8 errors=0 rc=0 times=[128.038, 105.371] rows=2 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:13:00 Q9 p180 r9 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:19:14 Q9 p180 r9 errors=0 rc=0 times=[217.137, 139.176] rows=175 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:19:14 Q10 p180 r10 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:24:54 Q10 p180 r10 errors=0 rc=0 times=[198.772, 124.789] rows=20 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:24:54 Q11 p180 r11 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:32:45 Q11 p180 r11 errors=0 rc=0 times=[40.385, 25.844] rows=29971985 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:34:38 Q12 p180 r12 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:38:02 Q12 p180 r12 errors=0 rc=0 times=[128.95, 60.075] rows=2 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:38:02 Q13 p180 r13 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:40:04 Q13 p180 r13 errors=0 rc=0 times=[55.905, 50.729] rows=52 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:40:04 Q14 p180 r14 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:43:32 Q14 p180 r14 errors=0 rc=0 times=[123.947, 68.731] rows=1 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:43:32 Q15 p180 r15 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:46:35 Q15 p180 r15 errors=0 rc=0 times=[105.717, 62.473] rows=1 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:46:36 Q16 p180 r16 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:47:20 Q16 p180 r16 errors=0 rc=0 times=[20.867, 9.638] rows=27840 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:47:20 Q17 p180 r17 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:51:33 Q17 p180 r17 errors=0 rc=0 times=[134.447, 103.372] rows=1 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:51:33 Q18 p180 r18 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+19:58:53 Q18 p180 r18 errors=0 rc=0 times=[235.443, 188.662] rows=100 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+19:58:54 Q19 p180 r19 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+20:02:37 Q19 p180 r19 errors=0 rc=0 times=[130.741, 77.784] rows=1 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+20:02:37 Q20 p180 r20 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+20:05:59 Q20 p180 r20 errors=0 rc=0 times=[102.554, 70.865] rows=5079748 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+20:05:59 Q21 p180 r21 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+20:12:38 Q21 p180 r21 errors=0 rc=0 times=[217.377, 166.144] rows=100 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+20:12:38 Q22 p180 r22 start (--host-pool 180Gi --spill-dir /scratch/prestouser/aocsa/sirius-spill-sf30k)
+20:13:27 Q22 p180 r22 errors=0 rc=0 times=[20.951, 13.693] rows=7 same=['ok', 'ok'] ref=['unverified', 'unverified'] spill=0
+20:13:27 sf30k A/B done

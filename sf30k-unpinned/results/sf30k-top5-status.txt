@@ -1,0 +1,9 @@
+r1   q21_sf30k    base       rc=1 times=[158.678, 100.892] rows=1 same=['ok', 'ok'] spill=0.0GB errors=8 to_disk=0GB hostpeak=41/41/41/41GiB min_free=303/327G
+r2   q09_sf30k    base       rc=0 times=[182.131, 132.35] rows=175 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=14GB hostpeak=184/189/189/187GiB min_free=20/36G
+r3   q18_sf30k    base       rc=1 times=[] rows=0 same=[] spill=5.5GB errors=0 to_disk=0GB hostpeak=0/0/0/0GiB min_free=11/51G
+r4   q07_sf30k    base       rc=0 times=[135.839, 83.736] rows=4 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=0GB hostpeak=18/18/18/18GiB min_free=361/367G
+r5   q14_sf30k    base       rc=0 times=[113.197, 65.494] rows=1 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=0GB hostpeak=47/47/47/47GiB min_free=298/314G
+r6   q18_sf30k    p170       rc=0 times=[229.301, 192.061] rows=100 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=1026GB hostpeak=170/170/170GiB min_free=51/66G
+r7   q09_sf30k    p170       rc=0 times=[340.135, 138.087] rows=175 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=156GB hostpeak=167/170/170/170GiB min_free=49/69G
+r8   q09_sf30k    p180       rc=0 times=[191.228, 203.112] rows=175 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=222GB hostpeak=180/177/180/180GiB min_free=28/49G
+r9   q18_sf30k    p180       rc=0 times=[226.736, 175.48] rows=100 same=['ok', 'ok'] spill=0.0GB errors=0 to_disk=940GB hostpeak=180/180/180GiB min_free=34/47G
