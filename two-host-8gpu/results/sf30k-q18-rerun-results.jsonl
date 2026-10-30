@@ -1,0 +1,1 @@
+{"query": 18, "sf": 30000, "rc": 0, "wall_s": 195.0, "times_s": [100.454, 66.267], "rows": [100, 100], "same_as_first": ["ok", "ok"], "vs_ref": ["ok", "ok"], "error_lines": 0, "spill_bytes": 0, "out": "/scratch/prestouser/aocsa/bench-xnode/tpch2host/runs/sf30k-q18-r2/q18"}

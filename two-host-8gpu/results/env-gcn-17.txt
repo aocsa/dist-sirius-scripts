@@ -1,0 +1,9 @@
+LD_LIBRARY_PATH=/home/aocsa/tools/nvda_nixl/lib/aarch64-linux-gnu:/home/aocsa/tools/ucx-install/lib:/cm/local/apps/mpc/1.3.1/lib:/cm/local/apps/mpc/1.3.1/lib64:/cm/local/apps/mpc/1.3.1/lib32:/cm/local/apps/mpfr/4.2.1/lib:/cm/local/apps/mpfr/4.2.1/lib64:/cm/local/apps/mpfr/4.2.1/lib32:/cm/local/apps/gmp/6.3.0/lib:/cm/local/apps/gmp/6.3.0/lib64:/cm/local/apps/gmp/6.3.0/lib32:/cm/local/apps/gcc/14.2.0/lib:/cm/local/apps/gcc/14.2.0/lib64:/cm/local/apps/gcc/14.2.0/lib32:/cm/local/apps/slurm/current/lib64/slurm:/cm/local/apps/slurm/current/lib64
+NIXL_PLUGIN_DIR=/home/aocsa/tools/nvda_nixl/lib/aarch64-linux-gnu/plugins
+NIXL_PREFIX=/home/aocsa/tools/nvda_nixl
+SIRIUS_CONFIG_FILE=/scratch/prestouser/aocsa/bench-xnode/tpch2host/runs/sf30k/q01/sirius-10.87.140.52.yaml
+SIRIUS_LOG_DIR=/scratch/prestouser/aocsa/bench-xnode/tpch2host/runs/sf30k/q01/logs/presto-gb200-gcn-17
+TIMEOUT=3600
+UCX_NET_DEVICES=bond0
+UCX_TLS=cuda_copy,cuda_ipc,tcp,self
+WT=/scratch/prestouser/aocsa/wt/xnode-staging

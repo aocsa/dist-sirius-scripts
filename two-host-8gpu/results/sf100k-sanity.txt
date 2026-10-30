@@ -1,0 +1,5 @@
+Q2: ok - rows [100, 100]
+Q11: ok - rows [93496926, 93496926], SF30000 rows above the exact threshold 28,120,291 x 10/3 = 93,734,303
+Q13: ok - sum(custdist) ['15,000,000,000', '15,000,000,000'], want 15,000,000,000
+Q16: ok - sum(supplier_cnt) ['11,869,963,455', '11,869,963,455'], SF30000 x 10/3 = 11,870,026,650
+Q22: ok - numcust per country code within 0.01% of SF30000 x 10/3

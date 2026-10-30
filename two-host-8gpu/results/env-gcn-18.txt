@@ -1,0 +1,9 @@
+LD_LIBRARY_PATH=/home/aocsa/tools/nvda_nixl/lib/aarch64-linux-gnu:/home/aocsa/tools/ucx-install/lib
+NIXL_PLUGIN_DIR=/home/aocsa/tools/nvda_nixl/lib/aarch64-linux-gnu/plugins
+NIXL_PREFIX=/home/aocsa/tools/nvda_nixl
+SIRIUS_CONFIG_FILE=/scratch/prestouser/aocsa/bench-xnode/tpch2host/runs/sf30k/q01/sirius-10.87.140.53.yaml
+SIRIUS_LOG_DIR=/scratch/prestouser/aocsa/bench-xnode/tpch2host/runs/sf30k/q01/logs/presto-gb200-gcn-18
+TIMEOUT=3600
+UCX_NET_DEVICES=bond0
+UCX_TLS=cuda_copy,cuda_ipc,tcp,self
+WT=/scratch/prestouser/aocsa/wt/xnode-staging
