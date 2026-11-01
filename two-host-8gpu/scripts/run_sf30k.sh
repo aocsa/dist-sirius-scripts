@@ -8,6 +8,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 out=$(realpath -m "$1")
 shift
 read -r -a hosts <<< "${HOSTS:-10.87.140.52 10.87.140.53}"
+export HOSTS="${hosts[*]}"
 mkdir -p "$out"
 
 guards=()

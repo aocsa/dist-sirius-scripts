@@ -13,7 +13,7 @@ Sirius branch: [`aocsa/sirius@exchange-operator-v2`](https://github.com/aocsa/si
 | [notes/TUNING.md](notes/TUNING.md) | **What to change with more GPUs, more VRAM, more host memory** |
 | [notes/FINDINGS.md](notes/FINDINGS.md) | Bugs found and fixed on the way, and what is still open |
 | [dist-plan-opt/](dist-plan-opt/README.md) | **4x GB200, all 22 TPC-H queries at SF3000/SF10000** with `aocsa/sirius@dist-plan-opt`: runner, profiling tools, configs, ZSTD data rewrite, notes |
-| [two-host-8gpu/](two-host-8gpu/README.md) | **8x GB200 across two hosts, all 22 TPC-H queries at SF30000 and the five without `lineitem` at SF100000** with `aocsa/sirius@distributed-exchange-cross-node-tcp-lanes`: runners, config, reports |
+| [two-host-8gpu/](two-host-8gpu/README.md) | **8x GB200 across two hosts, all 22 TPC-H queries at SF30000 and SF100000** (each within 4x its SF30000 time) with `aocsa/sirius@distributed-exchange-cross-node-tcp-lanes` and `wip/sf100k-q9-q10-q18`: build, runners, configs, column statistics, telemetry tools, reports and investigation notes |
 
 Headline (2x RTX PRO 4500, 32 GB each, SF3000, warm): Q5 as written takes 38.1 s on 1 GPU and
 30.6 s on 2; the same query in the Theseus-shaped SQL takes 10.5 s on 1 GPU and **6.3 s on 2**.

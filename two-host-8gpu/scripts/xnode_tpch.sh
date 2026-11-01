@@ -8,6 +8,8 @@
 # of an earlier run, or cpu_ref.sh's),
 # HOSTS ("10.87.140.52 10.87.140.53": gcn-17 and gcn-18 on bond0), SPILL_ROOT (a directory per host
 # under it, cleared before and after the run), WT (the Sirius checkout and build).
+# Passed on to the ranks when set: SIRIUS_PRIORITY_DOWNSTREAM_FIRST, SIRIUS_EXCHANGE_TCP_LANES,
+# SIRIUS_EXCHANGE_RECV_FRAMES_PER_PEER. gen_sql.py also reads STATS and NO_LINEITEM.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 q=$1
@@ -42,6 +44,17 @@ reap() { # Kills this build's leftover ranks on both hosts, nobody else's.
     on "$h" "for p in \$(pgrep -u \$(id -u) -x duckdb); do
       [ \"\$(readlink -f /proc/\$p/exe 2>/dev/null)\" = \"$bin\" ] && kill -9 \$p; done; true"
   done
+  sweep_shm
+}
+sweep_shm() {
+  local h
+  # A killed rank leaves its exchange receive mirror (/dev/shm/sirius-exchange-<pid>-<rank>,
+  # ~450 MiB) behind, and enough of them starve the next run's ranks of host memory.
+  for h in "${hosts[@]}"; do
+    on "$h" 'for f in /dev/shm/sirius-exchange-*; do
+      [ -O "$f" ] || continue; p=$(basename "$f" | cut -d- -f3)
+      kill -0 "$p" 2>/dev/null || rm -f "$f"; done; true'
+  done
 }
 
 w=0
@@ -49,6 +62,7 @@ until quiet; do
   sleep 10; w=$((w + 10))
   [ $w -ge 600 ] && { echo "Q$q: hosts not quiet after 10 min"; exit 1; }
 done
+sweep_shm
 
 rm -rf "$out"; mkdir -p "$out"
 python3 "$here/gen_sql.py" "$q" "$sf" "$data" "$iters" > "$out/q.sql" || exit 3
@@ -59,16 +73,16 @@ for ((h = 0; h < ${#hosts[@]}; h++)); do
   done
 done
 for h in "${hosts[@]}"; do
-  mkdir -p "$spill_root/$h"; rm -rf "${spill_root:?}/$h"/*
+  mkdir -p "$spill_root/$h"; find "${spill_root:?}/$h" -mindepth 1 -delete
   sed "s|@SPILL_DIR@|$spill_root/$h|" "$config" > "$out/sirius-$h.yaml"
 done
-echo "Q$q SF$sf on 8 ranks: $peers" | tee "$out/launch.txt"
+echo "Q$q SF$sf on $((${#hosts[@]} * per_host)) ranks: $peers" | tee "$out/launch.txt"
 
 t0=$(date +%s.%N)
 pids=()
 for ((h = 0; h < ${#hosts[@]}; h++)); do
   hh=${hosts[$h]}
-  on "$hh" "cd $WT && WT=$WT TIMEOUT=$TIMEOUT $pixi run --manifest-path $WT/pixi.toml bash $here/host_ranks.sh \
+  on "$hh" "cd $WT && WT=$WT TIMEOUT=$TIMEOUT SIRIUS_PRIORITY_DOWNSTREAM_FIRST=${SIRIUS_PRIORITY_DOWNSTREAM_FIRST:-} SIRIUS_EXCHANGE_TCP_LANES=${SIRIUS_EXCHANGE_TCP_LANES:-} SIRIUS_EXCHANGE_RECV_FRAMES_PER_PEER=${SIRIUS_EXCHANGE_RECV_FRAMES_PER_PEER:-} $pixi run --manifest-path $WT/pixi.toml bash $here/host_ranks.sh \
     $((h * per_host)) $per_host '$peers' $out/q.sql $out/sirius-$hh.yaml $out" \
     > "$out/host-$hh.log" 2>&1 &
   pids+=($!)
@@ -78,7 +92,7 @@ for p in "${pids[@]}"; do wait "$p" || rc=1; done
 t1=$(date +%s.%N)
 reap
 spill=$(du -sb "$spill_root" | cut -f1)
-for h in "${hosts[@]}"; do rm -rf "${spill_root:?}/$h"/*; done
+for h in "${hosts[@]}"; do find "${spill_root:?}/$h" -mindepth 1 -delete; done
 spill=$((spill - $(du -sb "$spill_root" | cut -f1)))
 python3 "$here/summarize.py" "$out" "$q" "$sf" "$rc" "$(echo "$t1 - $t0" | bc)" "$spill" "${REF:-}"
 exit $rc
